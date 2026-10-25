@@ -1,0 +1,866 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MYpart | My Society, My Responsibility</title>
+
+    <meta name="description"
+          content="Report civic issues and help build cleaner, safer communities with MYpart.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+
+    <style>
+        .report-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+        }
+
+        .report-modal.is-open {
+            display: flex;
+        }
+
+        .modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(13, 34, 23, 0.72);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-box {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 550px;
+            max-height: 92vh;
+            overflow-y: auto;
+            background: #ffffff;
+            padding: 32px;
+            border-radius: 20px;
+            box-shadow: 0 25px 75px rgba(0, 0, 0, 0.25);
+            animation: modalAppear 0.22s ease-out;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            width: 38px;
+            height: 38px;
+            border: none;
+            border-radius: 50%;
+            background: #f0f5f1;
+            color: #2d5a43;
+            font-size: 27px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: #e1eee5;
+        }
+
+        .modal-eyebrow {
+            color: #1f8a5b;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.3px;
+            text-transform: uppercase;
+            margin: 0 40px 8px 0;
+        }
+
+        .modal-box h2 {
+            color: #244d36;
+            font-size: 28px;
+            margin: 0 0 8px;
+        }
+
+        .modal-description {
+            color: #69766d;
+            font-size: 13px;
+            line-height: 1.7;
+            margin: 0 0 24px;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-form .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .modal-form label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #304b3a;
+        }
+
+        .modal-form input,
+        .modal-form select,
+        .modal-form textarea {
+            display: block;
+            width: 100%;
+            min-width: 0;
+            padding: 12px 13px;
+            border: 1px solid #d7e2d9;
+            border-radius: 9px;
+            background: #fbfdfb;
+            color: #26372c;
+            font-family: inherit;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        .modal-form input:focus,
+        .modal-form select:focus,
+        .modal-form textarea:focus {
+            outline: 2px solid #b4ddc1;
+            border-color: #1f8a5b;
+        }
+
+        .modal-form textarea {
+            resize: vertical;
+        }
+
+        .modal-form input[type="file"] {
+            background: #ffffff;
+            padding: 10px;
+        }
+
+        .modal-submit {
+            width: 100%;
+            justify-content: center;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .modal-submit:disabled {
+            opacity: 0.65;
+            cursor: wait;
+        }
+
+        .report-feedback {
+            display: none;
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .report-feedback.success,
+        .report-feedback.error {
+            display: block;
+        }
+
+        .report-feedback.success {
+            color: #205c39;
+            background: #e8f5ec;
+            border: 1px solid #b9dfc4;
+        }
+
+        .report-feedback.error {
+            color: #96352e;
+            background: #fff0ef;
+            border: 1px solid #efc3bf;
+        }
+
+        .report-feedback strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .report-feedback a {
+            display: inline-block;
+            margin-top: 8px;
+            color: inherit;
+            font-weight: 700;
+            text-decoration: underline;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(12px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .report-modal {
+                padding: 10px;
+            }
+
+            .modal-box {
+                padding: 27px 20px;
+                border-radius: 16px;
+                max-height: 95vh;
+            }
+
+            .modal-box h2 {
+                font-size: 24px;
+            }
+        }
+
+        /* PHOTO PREVIEW */
+        .image-preview-container {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f4f8f4;
+            border: 1px solid #d7e5d9;
+            border-radius: 12px;
+        }
+
+        .image-preview-container[hidden] {
+            display: none;
+        }
+
+        .image-preview-container img {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            max-height: 220px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .remove-photo-btn {
+            border: none;
+            background: transparent;
+            color: #b33b32;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 5px 0;
+        }
+
+        .remove-photo-btn:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVIGATION -->
+    <header class="navbar">
+        <div class="container nav-inner">
+
+            <a href="/" class="logo" aria-label="MYpart home">
+                <svg class="logo-leaf" viewBox="0 0 64 64" aria-hidden="true">
+                    <path d="M8 40C8 20 24 6 56 6c0 30-14 48-34 48-4 0-8-1-12-3 4-1 8-2 11-5-6 0-10-2-13-6z"
+                          fill="#1f8a5b"/>
+                    <path d="M12 52C22 36 32 26 46 16"
+                          stroke="#fff" stroke-width="3"
+                          fill="none" stroke-linecap="round"/>
+                </svg>
+                <span class="logo-my">MY</span><span class="logo-part">part</span>
+            </a>
+
+            <button class="menu-toggle"
+                    id="menuToggle"
+                    aria-label="Open navigation menu"
+                    aria-expanded="false">
+                &#9776;
+            </button>
+
+            <nav class="nav-links" id="navLinks">
+                <a href="/" class="active">Home</a>
+                <a href="#how-it-works">About</a>
+                <a href="{{ url_for('view_reports') }}">View Reports</a>
+                <a href="#contact">Contact</a>
+
+                <!-- NEW ADMIN LOGIN LINK -->
+               {% if session.get('is_admin') %}
+    <a href="{{ url_for('logout') }}">Logout</a>
+{% else %}
+    <a href="{{ url_for('login') }}">Admin Login</a>
+{% endif %}
+
+                <a href="#report"
+                   class="btn btn-primary btn-sm"
+                   onclick="openReportModal(); return false;">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M7 17L17 7M9 7h8v8"/>
+                    </svg>
+                    Report an Issue
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+
+        <!-- HERO SECTION -->
+        <section class="hero">
+            <img class="hero-bg"
+                 src="{{ url_for('static', filename='images/hero-street.png') }}"
+                 alt="">
+
+            <div class="hero-overlay"></div>
+
+            <div class="container hero-inner">
+                <div class="hero-text">
+
+                    <p class="eyebrow">Your community. Your voice.</p>
+
+                    <h1>
+                        My society.<br>
+                        My <span>responsibility.</span>
+                    </h1>
+
+                    <p class="hero-sub">
+                        Notice something wrong in your neighbourhood?<br>
+                        Report it on MYpart and help make your community<br>
+                        cleaner, safer and better.
+                    </p>
+
+                    <a href="#report"
+                       class="btn btn-primary btn-lg"
+                       onclick="openReportModal(); return false;">
+
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M7 17L17 7M9 7h8v8"/>
+                        </svg>
+
+                        Report an Issue
+
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M5 12h14M13 6l6 6-6 6"/>
+                        </svg>
+                    </a>
+
+                    <div class="tagline">
+                        <span>Notice</span>
+                        <i></i>
+                        <span>Report</span>
+                        <i></i>
+                        <span>Make a difference</span>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- HOW IT WORKS -->
+        <section class="how" id="how-it-works">
+            <div class="container how-inner">
+
+                <div class="how-intro">
+                    <p class="eyebrow dark">A small step towards change</p>
+                    <h2>How it works</h2>
+                    <p>Making your neighbourhood better starts with noticing.</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-num">01</span>
+                    <h3>Notice</h3>
+                    <p>Spot a public issue in your neighbourhood.</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-num">02</span>
+                    <h3>Report</h3>
+                    <p>Share the details and location of the issue.</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-num">03</span>
+                    <h3>Improve</h3>
+                    <p>Help bring attention to problems that matter.</p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- CALL TO ACTION -->
+        <section class="cta">
+            <div class="container cta-inner">
+
+                <div>
+                    <p class="eyebrow light">Your voice matters</p>
+                    <h2>Something needs attention?</h2>
+                    <p>Make the issue visible. Take the first step.</p>
+                </div>
+
+                <a href="#report"
+                   class="btn btn-light btn-lg"
+                   onclick="openReportModal(); return false;">
+                    Start a Report
+
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 12h14M13 6l6 6-6 6"/>
+                    </svg>
+                </a>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- REPORT ISSUE POPUP -->
+    <div class="report-modal"
+         id="reportModal"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="modalTitle"
+         aria-hidden="true">
+
+        <div class="modal-backdrop"
+             onclick="closeReportModal()"></div>
+
+        <div class="modal-box">
+
+            <button type="button"
+                    class="modal-close"
+                    id="closeReportModal"
+                    aria-label="Close report form">
+                &times;
+            </button>
+
+            <p class="modal-eyebrow">Your community. Your voice.</p>
+
+            <h2 id="modalTitle">Report an Issue</h2>
+
+            <p class="modal-description">
+                Tell us what needs attention in your neighbourhood.
+                Your report can help bring the issue to light.
+            </p>
+
+            <form class="modal-form"
+                  id="reportForm"
+                  action="{{ url_for('submit_report') }}"
+                  method="POST"
+                  enctype="multipart/form-data">
+
+                <div class="form-group">
+                    <label for="issue">Issue type</label>
+
+                    <select id="issue" name="issue" required>
+                        <option value="">Choose an issue</option>
+                        <option value="Waste dumping">Waste dumping</option>
+                        <option value="Blocked drain">Blocked drain</option>
+                        <option value="Faulty streetlight">Faulty streetlight</option>
+                        <option value="Damaged road">Damaged road</option>
+                        <option value="Water leakage">Water leakage</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                
+<div class="form-group">
+    <label for="location">Location</label>
+
+    <input type="text"
+           id="location"
+           name="location"
+           placeholder="Enter the issue location"
+           maxlength="250"
+           required>
+
+    <button type="button"
+            id="chooseLocationBtn"
+            class="location-map-btn">
+        📍 Choose Location on Map
+    </button>
+
+    <p id="selectedLocationText" class="location-help">
+        Enter the location manually or select a point on the map.
+    </p>
+
+    <input type="hidden"
+           id="latitude"
+           name="latitude">
+
+    <input type="hidden"
+           id="longitude"
+           name="longitude">
+</div>
+
+
+<div id="locationMapContainer"
+     style="display: none;">
+
+    <div class="location-map-panel">
+        <div class="location-map-header">
+            <p>Select the issue location on the map</p>
+
+            <button type="button"
+                    id="closeLocationMapBtn"
+                    class="location-map-close"
+                    aria-label="Close map">
+                &times;
+            </button>
+        </div>
+
+        <div id="locationMap"></div>
+
+        <div class="location-map-actions">
+            <span>Drag to move • Scroll to zoom • Click to place pin</span>
+
+            <button type="button"
+                    id="confirmLocationBtn"
+                    class="location-map-btn">
+                Confirm Location
+            </button>
+        </div>
+    </div>
+
+</div>
+
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+
+                    <textarea id="description"
+                              name="description"
+                              rows="3"
+                              maxlength="3000"
+                              placeholder="Describe the issue and its surroundings"
+                              required></textarea>
+                </div>
+
+                <!-- PHOTO UPLOAD -->
+                <div class="form-group">
+                    <label for="photo">Upload a photo (optional)</label>
+
+                    <input type="file"
+                           id="photo"
+                           name="photo"
+                           accept="image/png,image/jpeg,image/webp,image/gif">
+
+                    <small style="color:#69766d;font-size:11px;">
+                        JPG, PNG, WEBP or GIF. Maximum size: 5 MB.
+                    </small>
+
+                    <div id="imagePreviewContainer"
+                         class="image-preview-container"
+                         hidden>
+
+                        <img id="imagePreview"
+                             src=""
+                             alt="Preview of selected civic issue photo">
+
+                        <button type="button"
+                                id="removePhoto"
+                                class="remove-photo-btn">
+                            Remove photo
+                        </button>
+                    </div>
+                </div>
+
+                <div id="reportFeedback"
+                     class="report-feedback"
+                     role="status"
+                     aria-live="polite"></div>
+
+                <button type="submit"
+                        class="btn btn-primary btn-lg modal-submit"
+                        id="submitReportBtn">
+                    Submit Report
+                </button>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer" id="contact">
+        <div class="container footer-inner">
+
+            <a href="/" class="logo logo-footer" aria-label="MYpart home">
+                <svg class="logo-leaf" viewBox="0 0 64 64" aria-hidden="true">
+                    <path d="M8 40C8 20 24 6 56 6c0 30-14 48-34 48-4 0-8-1-12-3 4-1 8-2 11-5-6 0-10-2-13-6z"
+                          fill="#fff"/>
+                    <path d="M12 52C22 36 32 26 46 16"
+                          stroke="#0b3d2e" stroke-width="3"
+                          fill="none" stroke-linecap="round"/>
+                </svg>
+                <span class="logo-my">MY</span><span class="logo-part">part</span>
+            </a>
+
+            <p class="footer-center">My society. My responsibility.</p>
+            <p class="footer-right">Small actions. Shared responsibility.</p>
+
+        </div>
+    </footer>
+
+    <!-- POPUP AND FORM BEHAVIOUR -->
+    <script>
+        const reportModal = document.getElementById("reportModal");
+        const reportForm = document.getElementById("reportForm");
+        const reportFeedback = document.getElementById("reportFeedback");
+        const submitReportBtn = document.getElementById("submitReportBtn");
+        const closeReportButton = document.getElementById("closeReportModal");
+
+        let previouslyFocusedElement = null;
+
+        function openReportModal() {
+            previouslyFocusedElement = document.activeElement;
+
+            reportModal.classList.add("is-open");
+            reportModal.setAttribute("aria-hidden", "false");
+            document.body.classList.add("modal-open");
+
+            const firstField = document.getElementById("issue");
+            if (firstField) firstField.focus();
+        }
+
+        function closeReportModal() {
+            reportModal.classList.remove("is-open");
+            reportModal.setAttribute("aria-hidden", "true");
+            document.body.classList.remove("modal-open");
+
+            if (previouslyFocusedElement) {
+                previouslyFocusedElement.focus();
+            }
+        }
+
+        closeReportButton.addEventListener("click", closeReportModal);
+
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape" &&
+                reportModal.classList.contains("is-open")) {
+                closeReportModal();
+            }
+        });
+
+        // Submit without navigating to the raw JSON response.
+        reportForm.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            if (!reportForm.reportValidity()) return;
+
+            const originalButtonText = submitReportBtn.textContent.trim();
+
+            submitReportBtn.disabled = true;
+            submitReportBtn.textContent = "Submitting...";
+
+            reportFeedback.className = "report-feedback";
+            reportFeedback.replaceChildren();
+
+            try {
+                const response = await fetch(reportForm.action, {
+                    method: "POST",
+                    body: new FormData(reportForm)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(
+                        result.message || "Unable to submit your report."
+                    );
+                }
+
+                reportForm.reset();
+
+                reportFeedback.className = "report-feedback success";
+
+                const heading = document.createElement("strong");
+                heading.textContent = "Report submitted successfully!";
+
+                const message = document.createElement("div");
+                message.textContent =
+                    "Your report ID is #" + result.report_id +
+                    ". Keep this ID for reference.";
+
+                const reportsLink = document.createElement("a");
+                reportsLink.href = "{{ url_for('view_reports') }}";
+                reportsLink.textContent = "View submitted reports";
+
+                reportFeedback.append(heading, message, reportsLink);
+
+            } catch (error) {
+                reportFeedback.className = "report-feedback error";
+
+                const message = document.createElement("div");
+                message.textContent =
+                    error.message ||
+                    "Something went wrong. Please try again.";
+
+                reportFeedback.replaceChildren(message);
+
+            } finally {
+                submitReportBtn.disabled = false;
+                submitReportBtn.textContent = originalButtonText;
+            }
+        });
+
+        // PHOTO PREVIEW
+        const photoInput = document.getElementById("photo");
+        const imagePreviewContainer =
+            document.getElementById("imagePreviewContainer");
+        const imagePreview = document.getElementById("imagePreview");
+        const removePhotoButton = document.getElementById("removePhoto");
+
+        let previewURL = null;
+
+        function clearPhotoPreview() {
+            if (previewURL) {
+                URL.revokeObjectURL(previewURL);
+                previewURL = null;
+            }
+
+            imagePreview.removeAttribute("src");
+            imagePreviewContainer.hidden = true;
+        }
+
+        photoInput.addEventListener("change", function() {
+            clearPhotoPreview();
+
+            const file = this.files[0];
+
+            if (!file) return;
+
+            const allowedTypes = [
+                "image/png",
+                "image/jpeg",
+                "image/webp",
+                "image/gif"
+            ];
+
+            if (!allowedTypes.includes(file.type)) {
+                alert("Please select a PNG, JPG, WEBP, or GIF image.");
+                this.value = "";
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert("The photo must not exceed 5 MB.");
+                this.value = "";
+                return;
+            }
+
+            previewURL = URL.createObjectURL(file);
+            imagePreview.src = previewURL;
+            imagePreviewContainer.hidden = false;
+        });
+
+        removePhotoButton.addEventListener("click", function() {
+            photoInput.value = "";
+            clearPhotoPreview();
+        });
+
+        reportForm.addEventListener("reset", clearPhotoPreview);
+    </script>
+
+<!-- Leaflet map library -->
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const chooseBtn = document.getElementById("chooseLocationBtn");
+    const mapContainer = document.getElementById("locationMapContainer");
+    const confirmBtn = document.getElementById("confirmLocationBtn");
+    const closeBtn = document.getElementById("closeLocationMapBtn");
+    const locationInput = document.getElementById("location");
+    const latitudeInput = document.getElementById("latitude");
+    const longitudeInput = document.getElementById("longitude");
+    const selectedText = document.getElementById("selectedLocationText");
+
+    if (!chooseBtn || !mapContainer || !confirmBtn || !closeBtn) {
+        return;
+    }
+
+    let map = null;
+    let marker = null;
+    let selectedLatLng = null;
+
+    chooseBtn.addEventListener("click", function () {
+        mapContainer.style.display = "flex";
+
+        if (!map) {
+            map = L.map("locationMap").setView([10.8505, 76.2711], 8);
+
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            map.on("click", function (event) {
+                selectedLatLng = event.latlng;
+
+                if (marker) {
+                    marker.setLatLng(selectedLatLng);
+                } else {
+                    marker = L.marker(selectedLatLng).addTo(map);
+                }
+
+                selectedText.textContent =
+                    "Selected coordinates: " +
+                    selectedLatLng.lat.toFixed(6) + ", " +
+                    selectedLatLng.lng.toFixed(6) +
+                    ". Click Confirm Selected Location to save.";
+            });
+        }
+
+        setTimeout(function () {
+            map.invalidateSize();
+        }, 100);
+    });
+
+    confirmBtn.addEventListener("click", function () {
+        if (!selectedLatLng) {
+            alert("Please click the map to select the issue location.");
+            return;
+        }
+
+        latitudeInput.value = selectedLatLng.lat.toFixed(6);
+        longitudeInput.value = selectedLatLng.lng.toFixed(6);
+
+        locationInput.value =
+            "Selected map location (" +
+            selectedLatLng.lat.toFixed(6) + ", " +
+            selectedLatLng.lng.toFixed(6) + ")";
+
+        selectedText.textContent = "Location selected successfully.";
+        mapContainer.style.display = "none";
+    });
+
+    closeBtn.addEventListener("click", function () {
+        mapContainer.style.display = "none";
+    });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,619 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>View Reports | MYpart</title>
+    <meta name="description"
+          content="View and track community issues reported through MYpart.">
+
+    <style>
+        :root {
+            --green: #2d5a43;
+            --green-light: #eaf3ed;
+            --background: #f5f7f4;
+            --text: #24352b;
+            --muted: #6b786f;
+            --border: #e1e8e2;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--background);
+            color: var(--text);
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 18px 6%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            color: var(--green);
+            font-size: 27px;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .tagline {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        main {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 42px 22px 65px;
+        }
+
+        .page-heading {
+            margin-bottom: 28px;
+        }
+
+        .eyebrow {
+            color: var(--green);
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: clamp(30px, 4vw, 42px);
+            margin: 10px 0;
+            letter-spacing: -1px;
+        }
+
+        .intro {
+            color: var(--muted);
+            line-height: 1.7;
+            max-width: 650px;
+            margin: 0;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 36px;
+        }
+
+        .stat {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .stat-number {
+            font-size: 31px;
+            font-weight: 800;
+            margin-top: 12px;
+            color: var(--green);
+        }
+
+        .section-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        h2 {
+            font-size: 23px;
+            margin: 0;
+        }
+
+        .report-count {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .flash {
+            padding: 13px 16px;
+            border-radius: 9px;
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+
+        .flash.success {
+            background: #e6f5e9;
+            color: #246238;
+        }
+
+        .flash.error {
+            background: #fdeaea;
+            color: #922c2c;
+        }
+
+        .report-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .report-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 23px;
+            min-width: 0;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+
+        .report-card:hover {
+            box-shadow: 0 8px 24px rgba(32, 65, 43, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .report-id {
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 7px 11px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .status.reported {
+            background: #fff2d9;
+            color: #885600;
+        }
+
+        .status.in-progress {
+            background: #e4efff;
+            color: #2356a0;
+        }
+
+        .status.resolved {
+            background: #e2f5e7;
+            color: #24683a;
+        }
+
+        .report-card h3 {
+            font-size: 21px;
+            margin: 17px 0 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .report-photo {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+            display: block;
+            border-radius: 10px;
+            margin: 16px 0;
+            border: 1px solid var(--border);
+            background: var(--green-light);
+        }
+        
+.photo-placeholder {
+    width: 100%;
+    height: 240px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 16px 0;
+    border: 1px dashed #c8d8cb;
+    border-radius: 10px;
+    background: #f4f8f4;
+    color: #718076;
+    font-size: 13px;
+}
+
+.photo-placeholder .placeholder-icon {
+    font-size: 32px;
+}
+
+@media (max-width: 420px) {
+    .photo-placeholder {
+        height: 200px;
+    }
+}
+
+
+        .detail {
+            display: flex;
+            gap: 9px;
+            align-items: flex-start;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 9px 0;
+            overflow-wrap: anywhere;
+        }
+
+        .detail strong {
+            color: var(--text);
+            min-width: 74px;
+        }
+
+        .description {
+            font-size: 14px;
+            line-height: 1.75;
+            color: #536158;
+            overflow-wrap: anywhere;
+            white-space: pre-wrap;
+            margin: 17px 0;
+        }
+
+        .card-footer {
+            border-top: 1px solid var(--border);
+            padding-top: 17px;
+            margin-top: 18px;
+        }
+
+        .card-footer label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 9px;
+        }
+
+        .status-form {
+            display: flex;
+            gap: 9px;
+        }
+
+        select {
+            flex: 1;
+            min-width: 0;
+            padding: 11px;
+            border: 1px solid #d5dfd7;
+            border-radius: 8px;
+            background: white;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        button, .primary-link {
+            background: var(--green);
+            color: white;
+            border: 0;
+            border-radius: 8px;
+            padding: 11px 15px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        button:hover, .primary-link:hover {
+            background: #214632;
+        }
+
+        .empty-state {
+            background: white;
+            border: 1px dashed #b9c9bd;
+            border-radius: 15px;
+            padding: 55px 20px;
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+
+        .empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state p {
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .empty-state a {
+            display: inline-block;
+            margin-top: 12px;
+        }
+
+        footer {
+            padding: 25px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            background: white;
+        }
+
+        @media (max-width: 760px) {
+            .stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .report-list {
+                grid-template-columns: 1fr;
+            }
+
+            main {
+                padding-top: 30px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            header {
+                padding: 16px 5%;
+            }
+
+            nav {
+                gap: 13px;
+            }
+
+            .stat {
+                padding: 16px;
+            }
+
+            .report-card {
+                padding: 17px;
+            }
+
+            .status-form {
+                flex-direction: column;
+            }
+
+            .status-form button {
+                width: 100%;
+            }
+
+            .report-photo {
+                height: 200px;
+            }
+        }
+        
+.view-details-link {
+    display: inline-block;
+    margin: 0 0 8px;
+    color: #2d5a43;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.view-details-link:hover {
+    text-decoration: underline;
+}
+
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div>
+        <a class="logo" href="/">MYpart.</a>
+        <div class="tagline">My Society, My Responsibility</div>
+    </div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/#report">Report an Issue</a>
+        <a href="/reports">View Reports</a>
+    </nav>
+</header>
+
+<main>
+    <section class="page-heading">
+        <div class="eyebrow">Community Action</div>
+        <h1>Reported Issues</h1>
+        <p class="intro">
+            Every report is a step towards a cleaner, safer community.
+            View reported issues and track their progress here.
+        </p>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash {{ category }}" role="status">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="stats" aria-label="Report statistics">
+        <div class="stat">
+            <div class="stat-label">Total Reports</div>
+            <div class="stat-number">{{ counts.total }}</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-label">Reported</div>
+            <div class="stat-number">{{ counts.reported }}</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-label">In Progress</div>
+            <div class="stat-number">{{ counts.in_progress }}</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-label">Resolved</div>
+            <div class="stat-number">{{ counts.resolved }}</div>
+        </div>
+    </section>
+
+    <section>
+        <div class="section-heading">
+            <h2>Recent Reports</h2>
+            <span class="report-count">
+                {{ counts.total }} issue(s) submitted
+            </span>
+        </div>
+
+        <div class="report-list">
+            {% for report in reports %}
+                <article class="report-card">
+                    <div class="card-top">
+                        <span class="report-id">
+                            REPORT #{{ report.id }}
+                        </span>
+
+                        <span class="status
+                            {% if report.status == 'In Progress' %}
+                                in-progress
+                            {% elif report.status == 'Resolved' %}
+                                resolved
+                            {% else %}
+                                reported
+                            {% endif %}">
+                            {{ report.status }}
+                        </span>
+                    </div>
+
+                    <h3>{{ report.issue }}</h3>
+                    
+<a class="view-details-link"
+   href="{{ url_for('report_detail', report_id=report.id) }}">
+    View Full Details &rarr;
+</a>
+
+
+{% if report.photo %}
+    <img
+        class="report-photo"
+        src="{{ url_for('uploaded_file', filename=report.photo) }}"
+        alt="Photo submitted for report #{{ report.id }}"
+        loading="lazy"
+        onerror="this.hidden=true; this.nextElementSibling.hidden=false;"
+    >
+
+    <div class="photo-placeholder" hidden>
+        <span class="placeholder-icon">🖼️</span>
+        <span>Photo unavailable</span>
+    </div>
+{% else %}
+    <div class="photo-placeholder">
+        <span class="placeholder-icon">📷</span>
+        <span>No photo attached</span>
+    </div>
+{% endif %}
+
+
+                    <div class="detail">
+                        <strong>Location</strong>
+                        <span>{{ report.location }}</span>
+                    </div>
+
+                    <div class="detail">
+                        <strong>Submitted</strong>
+                        <span>{{ report.created_at }}</span>
+                    </div>
+
+                    <div class="description">{{ report.description }}</div>
+
+                    <div class="card-footer">
+                        <form
+                            class="status-form"
+                            action="{{ url_for('update_status', report_id=report.id) }}"
+                            method="POST"
+                        >
+                            <div style="flex: 1; min-width: 0;">
+                                <label for="status-{{ report.id }}">
+                                    Update issue status
+                                </label>
+
+                                <select
+                                    name="status"
+                                    id="status-{{ report.id }}"
+                                    required
+                                >
+                                    {% for status_option in [
+                                        'Reported',
+                                        'In Progress',
+                                        'Resolved'
+                                    ] %}
+                                        <option
+                                            value="{{ status_option }}"
+                                            {% if report.status == status_option %}
+                                                selected
+                                            {% endif %}
+                                        >
+                                            {{ status_option }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <button type="submit" style="align-self: flex-end;">
+                                Save Status
+                            </button>
+                        </form>
+                    </div>
+                </article>
+
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <h2>No reports yet</h2>
+                    <p>
+                        There are no submitted issues to display.
+                        Be the first to report a community problem.
+                    </p>
+                    <a class="primary-link" href="/#report">
+                        Report an Issue
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+</main>
+
+<footer>
+    MYpart — My Society, My Responsibility
+</footer>
+
+</body>
+</html>

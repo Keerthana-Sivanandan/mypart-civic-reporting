@@ -1,0 +1,670 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Report #{{ report.id }} | MYpart</title>
+    <meta name="description"
+          content="View the details and progress of a civic issue reported through MYpart.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
+          <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+>
+
+    <style>
+        :root {
+            --green: #2d5a43;
+            --green-light: #eaf3ed;
+            --background: #f5f7f4;
+            --text: #24352b;
+            --muted: #6b786f;
+            --border: #e1e8e2;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--text);
+        }
+
+        header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 18px 6%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            color: var(--green);
+            font-size: 27px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .tagline {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: var(--green);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        nav a:hover,
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        main {
+            width: min(100% - 36px, 950px);
+            margin: 0 auto;
+            padding: 38px 0 65px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 25px;
+            color: var(--green);
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .page-eyebrow {
+            color: var(--green);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            font-size: clamp(27px, 4vw, 38px);
+            line-height: 1.3;
+            letter-spacing: -0.8px;
+            margin: 8px 0;
+            overflow-wrap: anywhere;
+        }
+
+        .report-id {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status.reported {
+            background: #fff2d9;
+            color: #885600;
+        }
+
+        .status.in-progress {
+            background: #e4efff;
+            color: #2356a0;
+        }
+
+        .status.resolved {
+            background: #e2f5e7;
+            color: #24683a;
+        }
+
+        .detail-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 8px 28px rgba(32, 65, 43, 0.05);
+        }
+
+        .report-photo {
+            width: 100%;
+            max-height: 490px;
+            object-fit: contain;
+            display: block;
+            background: #edf3ee;
+        }
+
+        .photo-placeholder {
+            min-height: 230px;
+            padding: 30px;
+            background: #edf4ee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .photo-placeholder span {
+            font-size: 38px;
+        }
+
+        .detail-content {
+            padding: 30px;
+        }
+
+        .section-label {
+            color: var(--green);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin: 0 0 13px;
+        }
+
+        .description {
+            color: #536158;
+            font-size: 14px;
+            line-height: 1.9;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            margin: 0 0 30px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .info-item {
+            padding: 17px;
+            background: #f7faf7;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            min-width: 0;
+        }
+
+        .info-label {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 7px;
+        }
+
+        .info-value {
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+        .status-note {
+            margin-top: 22px;
+            padding: 17px;
+            border-radius: 11px;
+            background: var(--green-light);
+            color: var(--green);
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .page-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+
+        .action-link {
+            display: inline-block;
+            padding: 12px 18px;
+            background: var(--green);
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 9px;
+            text-align: center;
+        }
+
+        .action-link:hover {
+            background: #214632;
+        }
+
+        .action-link.secondary {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--green);
+        }
+
+        .action-link.secondary:hover {
+            background: var(--green-light);
+        }
+
+        footer {
+            padding: 24px;
+            text-align: center;
+            background: white;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 16px 5%;
+            }
+
+            nav {
+                gap: 13px;
+            }
+
+            main {
+                width: calc(100% - 28px);
+                padding-top: 27px;
+            }
+
+            .detail-content {
+                padding: 21px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .photo-placeholder {
+                min-height: 180px;
+            }
+
+            .page-actions {
+                flex-direction: column;
+            }
+
+            .action-link {
+                width: 100%;
+            }
+        }
+        
+.progress-section {
+    margin-top: 30px;
+    padding: 24px;
+    background: #f7faf7;
+    border: 1px solid #e0e9e1;
+    border-radius: 16px;
+}
+
+.progress-section h2 {
+    margin: 0 0 6px;
+    color: #244b36;
+    font-size: 21px;
+}
+
+.progress-subtitle {
+    margin: 0 0 24px;
+    color: #718075;
+    font-size: 13px;
+}
+
+.progress-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.progress-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    position: relative;
+}
+
+.step-circle {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid #cbd5ce;
+    color: #718075;
+    background: white;
+    font-weight: 700;
+}
+
+.progress-step.complete .step-circle {
+    background: #2d5a43;
+    color: white;
+    border-color: #2d5a43;
+}
+
+.progress-step.current .step-content h3 {
+    color: #2d5a43;
+}
+
+.step-content h3 {
+    margin: 4px 0 5px;
+    color: #68766c;
+    font-size: 15px;
+}
+
+.step-content p {
+    margin: 0;
+    color: #718075;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+@media (max-width: 600px) {
+    .progress-section {
+        padding: 18px;
+    }
+}
+/* Report location map */
+.location-map-section {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.location-map-section .section-label {
+    margin-bottom: 10px;
+}
+
+#report-map {
+    width: 100%;
+    height: 350px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    z-index: 1;
+}
+
+.map-description {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.7;
+    margin: 10px 0;
+}
+
+.map-external-link {
+    display: inline-block;
+    color: var(--green);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.map-external-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    #report-map {
+        height: 280px;
+    }
+}
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div>
+        <a class="logo" href="/">MYpart.</a>
+        <div class="tagline">My Society, My Responsibility</div>
+    </div>
+
+    <nav>
+        <a href="/">Home</a>
+        <a href="/reports">View Reports</a>
+    </nav>
+</header>
+
+<main>
+    <a class="back-link" href="{{ url_for('view_reports') }}">
+        &larr; Back to Reports
+    </a>
+
+    <div class="page-heading">
+        <div>
+            <div class="page-eyebrow">Community Issue Details</div>
+            <h1>{{ report.issue }}</h1>
+            <div class="report-id">Report #{{ report.id }}</div>
+        </div>
+
+        <span class="status
+            {% if report.status == 'In Progress' %}
+                in-progress
+            {% elif report.status == 'Resolved' %}
+                resolved
+            {% else %}
+                reported
+            {% endif %}">
+            {{ report.status }}
+        </span>
+    </div>
+
+    <article class="detail-card">
+
+        {% if report.photo %}
+            <img
+                class="report-photo"
+                src="{{ url_for('uploaded_file', filename=report.photo) }}"
+                alt="Photo of {{ report.issue }} for report #{{ report.id }}"
+                onerror="this.hidden=true; this.nextElementSibling.hidden=false;"
+            >
+
+            <div class="photo-placeholder" hidden>
+                <span>🖼️</span>
+                Photo unavailable
+            </div>
+        {% else %}
+            <div class="photo-placeholder">
+                <span>📷</span>
+                No photo was attached to this report.
+            </div>
+        {% endif %}
+
+        <div class="detail-content">
+            <h2 class="section-label">Issue Description</h2>
+
+            <p class="description">{{ report.description }}</p>
+
+            <h2 class="section-label">Report Information</h2>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Report ID</span>
+                    <span class="info-value">#{{ report.id }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Issue Type</span>
+                    <span class="info-value">{{ report.issue }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Location</span>
+                    <span class="info-value">{{ report.location }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Date and Time Submitted</span>
+                    <span class="info-value">{{ report.created_at }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Current Status</span>
+                    <span class="info-value">{{ report.status }}</span>
+                </div>
+            </div>
+{% if report.latitude is not none and report.longitude is not none %}
+<section class="location-map-section">
+
+    <h2 class="section-label">Reported Location</h2>
+
+    <p class="map-description">
+        This map shows the location selected when the issue was reported.
+    </p>
+
+    <div
+        id="report-map"
+        role="application"
+        aria-label="Map showing the reported issue location"
+    ></div>
+
+    <p class="map-description">
+        Coordinates: {{ "%.6f"|format(report.latitude) }},
+        {{ "%.6f"|format(report.longitude) }}
+    </p>
+
+    <a
+        class="map-external-link"
+        href="https://www.openstreetmap.org/?mlat={{ report.latitude }}&mlon={{ report.longitude }}#map=16/{{ report.latitude }}/{{ report.longitude }}"
+        target="_blank"
+        rel="noopener noreferrer"
+    >
+        View larger map ↗
+    </a>
+
+</section>
+{% endif %}
+            <div class="status-note">
+                <strong>Current progress</strong><br>
+
+                {% if report.status == 'Resolved' %}
+                    This issue has been marked as resolved.
+                {% elif report.status == 'In Progress' %}
+                    Action on this issue is marked as in progress.
+                {% else %}
+                    This issue has been reported and is awaiting further action.
+                {% endif %}
+                
+<section class="progress-section">
+    <h2>Issue Progress</h2>
+    <p class="progress-subtitle">
+        Track the progress of this civic issue.
+    </p>
+
+    <div class="progress-timeline">
+        <div class="progress-step
+            {% if report.status in ['Reported', 'In Progress', 'Resolved'] %}complete{% endif %}
+            {% if report.status == 'Reported' %}current{% endif %}">
+            <div class="step-circle">1</div>
+            <div class="step-content">
+                <h3>Reported</h3>
+                <p>Your issue has been submitted.</p>
+            </div>
+        </div>
+
+        <div class="progress-step
+            {% if report.status in ['In Progress', 'Resolved'] %}complete{% endif %}
+            {% if report.status == 'In Progress' %}current{% endif %}">
+            <div class="step-circle">2</div>
+            <div class="step-content">
+                <h3>In Progress</h3>
+                <p>Action is being taken on the issue.</p>
+            </div>
+        </div>
+
+        <div class="progress-step
+            {% if report.status == 'Resolved' %}complete current{% endif %}">
+            <div class="step-circle">3</div>
+            <div class="step-content">
+                <h3>Resolved</h3>
+                <p>The issue has been addressed.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+            </div>
+        </div>
+    </article>
+
+    <div class="page-actions">
+        <a class="action-link"
+           href="{{ url_for('view_reports') }}">
+            View All Reports
+        </a>
+
+        <a class="action-link secondary" href="/">
+            Return to Home
+        </a>
+    </div>
+</main>
+
+<footer>
+    MYpart — My Society, My Responsibility
+</footer>
+
+{% if report.latitude is not none and report.longitude is not none %}
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+></script>
+
+<script>
+    const reportLatitude = {{ report.latitude|tojson }};
+    const reportLongitude = {{ report.longitude|tojson }};
+
+    const reportMap = L.map("report-map").setView(
+        [reportLatitude, reportLongitude],
+        16
+    );
+
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }
+    ).addTo(reportMap);
+
+    L.marker([reportLatitude, reportLongitude])
+        .addTo(reportMap)
+        .bindPopup("Reported issue location")
+        .openPopup();
+</script>
+{% endif %}
+
+</body>
+</html>
